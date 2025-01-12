@@ -130,12 +130,23 @@ jobs:
           echo "Has PROD_API_KEY: $HAS_ENV_SECRET"
           echo "Environment Config: ${{ vars.ENV_SPECIFIC_CONFIG }}"
 
-      # Using OIDC Token
+      # Using OIDC Token (Fixed version)
       - name: Get OIDC Token
+        id: get-oidc-token
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const token = await core.getIDToken()
+            core.setSecret(token)
+            core.setOutput('token', token)
+      
+      - name: Use OIDC Token
         run: |
-          TOKEN=$(curl -H "Authorization: bearer ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}" \
-                      "${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}")
-          echo "Successfully retrieved OIDC token"
+          echo "OIDC token was retrieved successfully"
+          # Never print the actual token
+          if [ "${{ steps.get-oidc-token.outputs.token != '' }}" = "true" ]; then
+            echo "Token is available for use with cloud services"
+          fi
 
   matrix-variables:
     needs: demonstrate-variables
